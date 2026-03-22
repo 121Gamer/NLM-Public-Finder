@@ -1,0 +1,5 @@
+ddgs
+flask
+pandas
+requests
+beautifulsoup4

@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Discover publicly shared NotebookLM notebooks from across the web.">
+    <title>NLM Public Finder — Discover Public NotebookLM Notebooks</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* ── CSS Reset & Base ─────────────────────────────────── */
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg:         #09090f;
+            --surface:    #12121d;
+            --surface2:   #1a1a2e;
+            --border:     rgba(255,255,255,0.06);
+            --border2:    rgba(255,255,255,0.12);
+            --text:       #e8e8f0;
+            --muted:      #8888aa;
+            --accent:     #4f8ef7;
+            --accent-dim: rgba(79,142,247,0.15);
+            --accent-glow:rgba(79,142,247,0.35);
+            --green:      #34c759;
+            --green-dim:  rgba(52,199,89,0.15);
+            --red:        #ff453a;
+            --red-dim:    rgba(255,69,58,0.15);
+            --yellow:     #ffd60a;
+            --yellow-dim: rgba(255,214,10,0.13);
+            --radius:     14px;
+            --radius-sm:  8px;
+            --shadow:     0 4px 32px rgba(0,0,0,0.45);
+            --transition: 0.2s ease;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            padding: 0;
+        }
+
+        /* ── Animated background gradient ───────────────────── */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 80% 60% at 10% 0%,  rgba(79,142,247,0.12) 0%, transparent 60%),
+                radial-gradient(ellipse 60% 50% at 90% 100%, rgba(138,79,247,0.10) 0%, transparent 55%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* ── Layout ──────────────────────────────────────────── */
+        .page-wrap {
+            position: relative;
+            z-index: 1;
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 32px 20px 80px;
+        }
+
+        /* ── Header ──────────────────────────────────────────── */
+        header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-bottom: 36px;
+        }
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .brand-icon {
+            width: 44px; height: 44px;
+            background: linear-gradient(135deg, #4f8ef7, #8a4ff7);
+            border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 22px;
+            box-shadow: 0 0 24px var(--accent-glow);
+            flex-shrink: 0;
+        }
+        .brand-text h1 {
+            font-size: 1.45rem;
+            font-weight: 700;
+            letter-spacing: -0.4px;
+            line-height: 1.1;
+        }
+        .brand-text p {
+            font-size: 0.78rem;
+            color: var(--muted);
+            margin-top: 2px;
+        }
+
+        /* ── Stats bar ───────────────────────────────────────── */
+        .stats-bar {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .stat-chip {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 50px;
+            padding: 6px 14px;
+            font-size: 0.82rem;
+            color: var(--muted);
+        }
+        .stat-chip strong { color: var(--text); }
+        .stat-chip .dot {
+            width: 7px; height: 7px;
+            border-radius: 50%;
+            background: var(--green);
+            box-shadow: 0 0 6px var(--green);
+        }
+
+        /* ── Alerts ──────────────────────────────────────────── */
+        .alerts { margin-bottom: 20px; display: flex; flex-direction: column; gap: 10px; }
+        .alert {
+            padding: 12px 16px;
+            border-radius: var(--radius-sm);
+            font-size: 0.88rem;
+            border: 1px solid transparent;
+            animation: slideIn 0.3s ease;
+        }
+        .alert-success { background: var(--green-dim);  border-color: rgba(52,199,89,0.3);  color: #7deb9e; }
+        .alert-warning { background: var(--yellow-dim); border-color: rgba(255,214,10,0.3); color: #ffe066; }
+        .alert-error   { background: var(--red-dim);   border-color: rgba(255,69,58,0.35); color: #ff8080; }
+
+        /* ── Search panel ─────────────────────────────────────── */
+        .search-panel {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 22px;
+            margin-bottom: 28px;
+            box-shadow: var(--shadow);
+        }
+        .search-panel h2 {
+            font-size: 0.78rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--muted);
+            margin-bottom: 14px;
+        }
+        .search-row {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .input-wrap {
+            flex: 1;
+            min-width: 220px;
+            position: relative;
+        }
+        .input-wrap .input-icon {
+            position: absolute;
+            left: 12px; top: 50%;
+            transform: translateY(-50%);
+            color: var(--muted);
+            font-size: 15px;
+            pointer-events: none;
+        }
+        input[type="text"], input[type="number"] {
+            width: 100%;
+            background: var(--surface2);
+            border: 1px solid var(--border2);
+            border-radius: var(--radius-sm);
+            color: var(--text);
+            font-family: inherit;
+            font-size: 0.92rem;
+            padding: 10px 12px 10px 36px;
+            outline: none;
+            transition: border-color var(--transition), box-shadow var(--transition);
+        }
+        input[type="text"]::placeholder { color: var(--muted); }
+        input[type="text"]:focus, input[type="number"]:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-dim);
+        }
+        .num-wrap { flex: 0 0 auto; width: 90px; position: relative; }
+        .num-wrap input { padding-left: 12px; text-align: center; }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: var(--radius-sm);
+            font-family: inherit;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            text-decoration: none;
+            white-space: nowrap;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #4f8ef7, #6f6ff7);
+            color: #fff;
+            box-shadow: 0 2px 12px var(--accent-glow);
+        }
+        .btn-primary:hover { filter: brightness(1.1); transform: translateY(-1px); }
+        .btn-primary:active { transform: translateY(0); }
+        .btn-green {
+            background: var(--green-dim);
+            color: var(--green);
+            border: 1px solid rgba(52,199,89,0.3);
+        }
+        .btn-green:hover { background: rgba(52,199,89,0.25); }
+        .btn-ghost {
+            background: var(--surface2);
+            color: var(--muted);
+            border: 1px solid var(--border);
+        }
+        .btn-ghost:hover { color: var(--text); border-color: var(--border2); }
+
+        /* Loading spinner */
+        .spinner {
+            display: none;
+            width: 16px; height: 16px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+        }
+        .btn-primary.loading .btn-label { display: none; }
+        .btn-primary.loading .spinner { display: block; }
+
+        /* ── Filter & toolbar ─────────────────────────────────── */
+        .toolbar {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+        .filter-wrap {
+            flex: 1;
+            min-width: 200px;
+            position: relative;
+        }
+        .filter-wrap .input-icon { pointer-events: none; }
+        #filterInput {
+            background: var(--surface);
+            border-color: var(--border);
+        }
+        .count-badge {
+            font-size: 0.82rem;
+            color: var(--muted);
+            white-space: nowrap;
+        }
+
+        /* ── Card grid ────────────────────────────────────────── */
+        #cardGrid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 16px;
+        }
+
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            transition: border-color var(--transition), box-shadow var(--transition), transform var(--transition);
+            animation: fadeUp 0.35s ease both;
+        }
+        .card:hover {
+            border-color: var(--border2);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+            transform: translateY(-2px);
+        }
+        .card-header {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+        .card-favicon {
+            width: 32px; height: 32px;
+            border-radius: 8px;
+            background: linear-gradient(135deg, #1f2251, #2a2a5a);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 16px;
+            flex-shrink: 0;
+        }
+        .card-title-block { flex: 1; min-width: 0; }
+        .card-title {
+            font-size: 0.97rem;
+            font-weight: 600;
+            line-height: 1.3;
+            word-break: break-word;
+        }
+        .card-url {
+            display: block;
+            font-size: 0.75rem;
+            color: var(--accent);
+            word-break: break-all;
+            margin-top: 2px;
+            text-decoration: none;
+            opacity: 0.8;
+            transition: opacity var(--transition);
+        }
+        .card-url:hover { opacity: 1; text-decoration: underline; }
+        .card-desc {
+            font-size: 0.83rem;
+            color: var(--muted);
+            line-height: 1.5;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        .card-desc:empty { display: none; }
+
+        /* Tags */
+        .card-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+        .tag-badge {
+            font-size: 0.73rem;
+            font-weight: 500;
+            padding: 3px 9px;
+            background: var(--accent-dim);
+            color: var(--accent);
+            border-radius: 50px;
+            border: 1px solid rgba(79,142,247,0.25);
+        }
+
+        /* Tag editor */
+        .tag-editor {
+            display: flex;
+            gap: 7px;
+            align-items: center;
+        }
+        .tag-input {
+            flex: 1;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text);
+            font-family: inherit;
+            font-size: 0.8rem;
+            padding: 5px 10px;
+            outline: none;
+        }
+        .tag-input:focus { border-color: var(--accent); }
+        .btn-tag-save {
+            padding: 5px 12px;
+            font-size: 0.8rem;
+            background: var(--accent-dim);
+            color: var(--accent);
+            border: 1px solid rgba(79,142,247,0.25);
+            border-radius: 6px;
+            cursor: pointer;
+            font-family: inherit;
+            font-weight: 600;
+            transition: background var(--transition);
+            white-space: nowrap;
+        }
+        .btn-tag-save:hover { background: rgba(79,142,247,0.25); }
+
+        /* Card footer */
+        .card-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            margin-top: 2px;
+        }
+        .card-date {
+            font-size: 0.74rem;
+            color: var(--muted);
+        }
+        .card-actions { display: flex; gap: 8px; align-items: center; }
+        .btn-open {
+            font-size: 0.78rem;
+            padding: 5px 11px;
+            background: var(--surface2);
+            color: var(--muted);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            text-decoration: none;
+            display: inline-flex; align-items: center; gap: 5px;
+            transition: all var(--transition);
+        }
+        .btn-open:hover { color: var(--text); border-color: var(--border2); }
+        .btn-delete {
+            font-size: 0.78rem;
+            padding: 5px 11px;
+            background: var(--red-dim);
+            color: var(--red);
+            border: 1px solid rgba(255,69,58,0.25);
+            border-radius: 6px;
+            cursor: pointer;
+            font-family: inherit;
+            font-weight: 500;
+            transition: background var(--transition);
+        }
+        .btn-delete:hover { background: rgba(255,69,58,0.25); }
+
+        /* Empty state */
+        .empty-state {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--muted);
+        }
+        .empty-state .empty-icon { font-size: 52px; margin-bottom: 14px; }
+        .empty-state h3 { font-size: 1.1rem; color: var(--text); margin-bottom: 6px; }
+        .empty-state p { font-size: 0.88rem; }
+
+        /* Pagination */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            margin-top: 30px;
+            flex-wrap: wrap;
+        }
+        .page-btn {
+            padding: 7px 14px;
+            font-size: 0.85rem;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            color: var(--muted);
+            cursor: pointer;
+            font-family: inherit;
+            transition: all var(--transition);
+        }
+        .page-btn:hover, .page-btn.active {
+            background: var(--accent-dim);
+            border-color: rgba(79,142,247,0.4);
+            color: var(--accent);
+        }
+        .page-btn:disabled { opacity: 0.35; cursor: default; }
+        #pageInfo { font-size: 0.83rem; color: var(--muted); padding: 0 6px; }
+
+        /* ── Animations ───────────────────────────────────────── */
+        @keyframes spin    { to { transform: rotate(360deg); } }
+        @keyframes fadeUp  { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+
+        /* ── Responsive ───────────────────────────────────────── */
+        @media (max-width: 600px) {
+            header { flex-direction: column; align-items: flex-start; }
+            .search-row { flex-direction: column; }
+            .num-wrap { width: 100%; }
+            #cardGrid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+<div class="page-wrap">
+
+    <!-- Header -->
+    <header>
+        <div class="brand">
+            <div class="brand-icon">📚</div>
+            <div class="brand-text">
+                <h1>NLM Public Finder</h1>
+                <p>Discover publicly shared NotebookLM notebooks</p>
+            </div>
+        </div>
+        <div class="stats-bar">
+            <div class="stat-chip">
+                <span class="dot"></span>
+                <strong id="totalCount">{{ stats.total }}</strong> notebooks
+            </div>
+            <div class="stat-chip">
+                ✨ <strong id="todayCount">{{ stats.today }}</strong> added today
+            </div>
+            <a href="/export" class="btn btn-green" title="Export all as CSV">
+                📥 Export CSV
+            </a>
+        </div>
+    </header>
+
+    <!-- Flash alerts -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="alerts">
+          {% for category, message in messages %}
+            <div class="alert alert-{{ category }}">{{ message|safe }}</div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    <!-- Search Panel -->
+    <div class="search-panel">
+        <h2>🦆 DuckDuckGo Search</h2>
+        <form id="searchForm" action="/search" method="post">
+            <div class="search-row">
+                <div class="input-wrap">
+                    <span class="input-icon">🔎</span>
+                    <input type="text" id="queryInput" name="query"
+                           value="site:notebooklm.google.com"
+                           placeholder="e.g. site:notebooklm.google.com history">
+                </div>
+                <div class="num-wrap">
+                    <input type="number" name="num_results" value="10" min="1" max="50" title="Number of results">
+                </div>
+                <button type="submit" class="btn btn-primary" id="searchBtn">
+                    <span class="btn-label">🔍 Search</span>
+                    <span class="spinner"></span>
+                </button>
+            </div>
+            <p style="margin-top:10px; font-size:0.78rem; color: var(--muted);">
+                Tip: add keywords after the site filter — e.g. <em>site:notebooklm.google.com science</em>. Powered by DuckDuckGo — no rate limits.
+            </p>
+        </form>
+    </div>
+
+    <!-- Filter toolbar -->
+    <div class="toolbar">
+        <div class="filter-wrap">
+            <span class="input-icon" style="position:absolute; left:12px; top:50%; transform:translateY(-50%); color:var(--muted);">🔎</span>
+            <input type="text" id="filterInput" placeholder="Filter library…"
+                   style="padding-left:36px;" oninput="filterCards()">
+        </div>
+        <span class="count-badge" id="visibleCount">Showing {{ notebooks|length }} of {{ notebooks|length }}</span>
+        <button class="btn btn-ghost" onclick="clearFilter()" title="Clear filter">✕ Clear</button>
+    </div>
+
+    <!-- Card grid -->
+    <div id="cardGrid">
+        {% for nb in notebooks %}
+        <div class="card"
+             data-url="{{ nb.url }}"
+             data-title="{{ nb.title|lower }}"
+             data-desc="{{ (nb.description or '')|lower }}"
+             data-tags="{{ (nb.tags or '')|lower }}">
+            <div class="card-header">
+                <div class="card-favicon">🗒️</div>
+                <div class="card-title-block">
+                    <div class="card-title">{{ nb.title or nb.url }}</div>
+                    <a class="card-url" href="{{ nb.url }}" target="_blank" rel="noopener">{{ nb.url }}</a>
+                </div>
+            </div>
+
+            {% if nb.description %}
+            <div class="card-desc">{{ nb.description }}</div>
+            {% endif %}
+
+            <!-- Tags display -->
+            {% if nb.tags %}
+            <div class="card-tags">
+                {% for t in nb.tags.split(',') %}
+                    {% if t.strip() %}
+                    <span class="tag-badge">{{ t.strip() }}</span>
+                    {% endif %}
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- Tag editor -->
+            <div class="tag-editor">
+                <input class="tag-input"
+                       type="text"
+                       placeholder="Add tags (comma separated)"
+                       value="{{ nb.tags or '' }}"
+                       data-url="{{ nb.url }}">
+                <button class="btn-tag-save" onclick="saveTag(this)">💾 Save</button>
+            </div>
+
+            <div class="card-footer">
+                <span class="card-date">📅 {{ nb.date_added[:10] if nb.date_added else '—' }}</span>
+                <div class="card-actions">
+                    <a class="btn-open" href="{{ nb.url }}" target="_blank" rel="noopener">↗ Open</a>
+                    <form action="/delete" method="post" onsubmit="return confirm('Remove this notebook from your library?');">
+                        <input type="hidden" name="url" value="{{ nb.url }}">
+                        <button type="submit" class="btn-delete">🗑 Remove</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-icon">🔭</div>
+            <h3>Library is empty</h3>
+            <p>Run a search above to discover public NotebookLM notebooks!</p>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    <div class="pagination" id="pagination"></div>
+
+</div>
+
+<script>
+    /* ── Client-side state ───────────────────── */
+    const CARDS_PER_PAGE = 12;
+    let allCards = [];
+    let filteredCards = [];
+    let currentPage = 1;
+
+    function init() {
+        allCards = Array.from(document.querySelectorAll('#cardGrid .card'));
+        filteredCards = allCards.slice();
+        renderPage();
+    }
+
+    /* ── Filter ──────────────────────────────── */
+    function filterCards() {
+        const q = document.getElementById('filterInput').value.toLowerCase().trim();
+        if (!q) {
+            filteredCards = allCards.slice();
+        } else {
+            filteredCards = allCards.filter(card => {
+                return card.dataset.title.includes(q)
+                    || card.dataset.desc.includes(q)
+                    || card.dataset.tags.includes(q)
+                    || card.dataset.url.toLowerCase().includes(q);
+            });
+        }
+        currentPage = 1;
+        renderPage();
+    }
+
+    function clearFilter() {
+        document.getElementById('filterInput').value = '';
+        filterCards();
+    }
+
+    /* ── Pagination ──────────────────────────── */
+    function renderPage() {
+        const total = filteredCards.length;
+        const totalPages = Math.max(1, Math.ceil(total / CARDS_PER_PAGE));
+        currentPage = Math.min(currentPage, totalPages);
+
+        const start = (currentPage - 1) * CARDS_PER_PAGE;
+        const end   = start + CARDS_PER_PAGE;
+
+        // Hide/show all original cards
+        allCards.forEach(c => c.style.display = 'none');
+        filteredCards.forEach((c, i) => {
+            c.style.display = (i >= start && i < end) ? 'flex' : 'none';
+            c.style.flexDirection = 'column';
+        });
+
+        // Empty state
+        let emptyEl = document.querySelector('.empty-state');
+        if (!emptyEl && total === 0) {
+            const grid = document.getElementById('cardGrid');
+            emptyEl = document.createElement('div');
+            emptyEl.className = 'empty-state dynamic-empty';
+            emptyEl.innerHTML = '<div class="empty-icon">🔍</div><h3>No matches</h3><p>Try a different filter term.</p>';
+            grid.appendChild(emptyEl);
+        } else if (emptyEl && emptyEl.classList.contains('dynamic-empty') && total > 0) {
+            emptyEl.remove();
+        }
+
+        // Count badge
+        document.getElementById('visibleCount').textContent =
+            `Showing ${Math.min(end, total)} of ${total}`;
+
+        // Pagination buttons
+        const pg = document.getElementById('pagination');
+        pg.innerHTML = '';
+        if (totalPages <= 1) return;
+
+        const addBtn = (label, page, active, disabled) => {
+            const b = document.createElement('button');
+            b.className = 'page-btn' + (active ? ' active' : '');
+            b.textContent = label;
+            b.disabled = disabled;
+            b.onclick = () => { currentPage = page; renderPage(); };
+            pg.appendChild(b);
+        };
+
+        addBtn('‹ Prev', currentPage - 1, false, currentPage === 1);
+        for (let p = 1; p <= totalPages; p++) {
+            if (totalPages > 7 && Math.abs(p - currentPage) > 2 && p !== 1 && p !== totalPages) {
+                if (p === 2 || p === totalPages - 1) {
+                    const dots = document.createElement('span');
+                    dots.id = 'pageInfo';
+                    dots.textContent = '…';
+                    pg.appendChild(dots);
+                }
+                continue;
+            }
+            addBtn(p, p, p === currentPage, false);
+        }
+        addBtn('Next ›', currentPage + 1, false, currentPage === totalPages);
+    }
+
+    /* ── Tag saving ──────────────────────────── */
+    function saveTag(btn) {
+        const input = btn.previousElementSibling;
+        const url   = input.dataset.url;
+        const tags  = input.value.trim();
+
+        fetch('/tag', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: `url=${encodeURIComponent(url)}&tags=${encodeURIComponent(tags)}`
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.status === 'ok') {
+                btn.textContent = '✅ Saved!';
+                setTimeout(() => btn.textContent = '💾 Save', 1800);
+                // Update card dataset for filtering
+                const card = btn.closest('.card');
+                if (card) card.dataset.tags = tags.toLowerCase();
+                // Update tag badges
+                let badgesEl = card.querySelector('.card-tags');
+                if (tags) {
+                    if (!badgesEl) {
+                        badgesEl = document.createElement('div');
+                        badgesEl.className = 'card-tags';
+                        card.querySelector('.card-desc')
+                            ? card.querySelector('.card-desc').after(badgesEl)
+                            : card.querySelector('.card-header').after(badgesEl);
+                    }
+                    badgesEl.innerHTML = tags.split(',').filter(t => t.trim())
+                        .map(t => `<span class="tag-badge">${t.trim()}</span>`).join('');
+                } else if (badgesEl) {
+                    badgesEl.remove();
+                }
+            }
+        })
+        .catch(() => { btn.textContent = '❌ Error'; setTimeout(() => btn.textContent = '💾 Save', 2000); });
+    }
+
+    /* ── Search loading state ────────────────── */
+    document.getElementById('searchForm').addEventListener('submit', () => {
+        const btn = document.getElementById('searchBtn');
+        btn.classList.add('loading');
+        btn.disabled = true;
+    });
+
+    /* ── Init ────────────────────────────────── */
+    init();
+</script>
+</body>
+</html>

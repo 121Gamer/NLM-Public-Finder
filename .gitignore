@@ -1,0 +1,9 @@
+*.pyc
+__pycache__/
+*.db
+notebooks.db
+.env
+venv/
+env/
+.VSCode/
+.idea/
