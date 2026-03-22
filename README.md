@@ -2,7 +2,7 @@
 
 **Discover, curate, and explore publicly shared Google NotebookLM notebooks across the web.**
 
-![NLM Public Finder UI](https://github.com/121Gamer/NLM-Public-Finder/blob/main/.ai/screenshot_placeholder.jpg?raw=true)
+![NLM Public Finder UI](https://github.com/121Gamer/NLM-Public-Finder/blob/main/.ai/screenshot.png?raw=true)
 
 ## 🌟 Overview
 
